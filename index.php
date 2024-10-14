@@ -48,9 +48,6 @@
     </div>
 
 <?php
-// Include database connection file
-include('db_connect.php');
-
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -62,24 +59,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $phone = $_POST['phone'];
 
-    // Insert data into the Users table
-    $sql = "INSERT INTO Users (name, age, gender, locality, email, phone) 
-            VALUES (?, ?, ?, ?, ?, ?)";
+    // Azure SQL Database connection parameters
+    $serverName = "tcp:gymserver.database.windows.net,1433";
+    $connectionOptions = array(
+        "Database" => "gymdatabase",
+        "Uid" => "thomas",
+        "PWD" => "Adiadarsh@123"
+    );
 
-    $params = array($name, $age, $gender, $locality, $email, $phone);
+    // Establish the connection to Azure SQL Database
+    try {
+        $conn = sqlsrv_connect($serverName, $connectionOptions);
 
-    $stmt = sqlsrv_query($conn, $sql, $params);
+        if ($conn === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
 
-    if ($stmt === false) {
-        die(print_r(sqlsrv_errors(), true));
-    } else {
-        // Redirect to greeting.php after successful submission
-        header("Location: greeting.php?name=" . urlencode($name));
-        exit();
+        // Insert data into the Users table
+        $sql = "INSERT INTO Users (name, age, gender, locality, email, phone) 
+                VALUES (?, ?, ?, ?, ?, ?)";
+
+        $params = array($name, $age, $gender, $locality, $email, $phone);
+
+        $stmt = sqlsrv_query($conn, $sql, $params);
+
+        if ($stmt === false) {
+            die(print_r(sqlsrv_errors(), true));
+        } else {
+            // Redirect to greeting.php after successful submission
+            header("Location: greeting.php?name=" . urlencode($name));
+            exit();
+        }
+
+        // Close the connection
+        sqlsrv_close($conn);
+
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
     }
-
-    // Close the connection
-    sqlsrv_close($conn);
 }
 ?>
 
